@@ -18,13 +18,13 @@ This library is currently under active development.
 ## Installation
 
 ```bash
-npm install @tvojusername/react-comments
+npm install @zmirnes/react-comments
 ```
 
 ## Quick Start
 
 ```jsx
-import { Comments } from "@tvojusername/react-comments";
+import { Comments } from "@zmirnes/react-comments";
 
 function App() {
   return <Comments />;
