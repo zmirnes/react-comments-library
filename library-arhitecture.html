@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React Comments Library - Architecture Guide</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f5f5f5;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      nav {
+        background: #2d3748;
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+      }
+
+      nav a {
+        color: white;
+        text-decoration: none;
+        transition: color 0.3s;
+      }
+
+      nav a:hover {
+        color: #667eea;
+      }
+
+      section {
+        padding: 3rem 2rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      section:last-child {
+        border-bottom: none;
+      }
+
+      h2 {
+        font-size: 2rem;
+        color: #667eea;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #667eea;
+      }
+
+      h3 {
+        font-size: 1.5rem;
+        color: #2d3748;
+        margin: 2rem 0 1rem 0;
+      }
+
+      h4 {
+        font-size: 1.2rem;
+        color: #4a5568;
+        margin: 1.5rem 0 0.75rem 0;
+      }
+
+      p {
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
+      }
+
+      .layer-box {
+        background: #f7fafc;
+        border-left: 4px solid #667eea;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .layer-box h4 {
+        margin-top: 0;
+        color: #667eea;
+      }
+
+      .flow-diagram {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2rem;
+        margin: 2rem 0;
+        overflow-x: auto;
+      }
+
+      .flow-step {
+        background: #667eea;
+        color: white;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 8px;
+        position: relative;
+      }
+
+      .flow-step::after {
+        content: "↓";
+        position: absolute;
+        bottom: -1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 2rem;
+        color: #667eea;
+      }
+
+      .flow-step:last-child::after {
+        content: "";
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      code {
+        background: #2d3748;
+        color: #68d391;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        font-size: 0.9em;
+      }
+
+      pre {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 1.5rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+
+      .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 1rem;
+        text-align: left;
+        border: 1px solid #e2e8f0;
+      }
+
+      .comparison-table th {
+        background: #667eea;
+        color: white;
+        font-weight: 600;
+      }
+
+      .comparison-table tr:nth-child(even) {
+        background: #f7fafc;
+      }
+
+      .highlight-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .success-box {
+        background: #d1fae5;
+        border-left: 4px solid #10b981;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .architecture-diagram {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2rem;
+        margin: 2rem 0;
+        text-align: center;
+      }
+
+      .layer {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .arrow-down {
+        font-size: 2rem;
+        color: #667eea;
+        margin: 0.5rem 0;
+      }
+
+      ul,
+      ol {
+        margin-left: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      li {
+        margin-bottom: 0.5rem;
+      }
+
+      @media print {
+        nav {
+          display: none;
+        }
+
+        section {
+          page-break-inside: avoid;
+        }
+
+        .flow-diagram,
+        .architecture-diagram {
+          page-break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🎨 React Comments Library</h1>
+        <p>Complete Architecture Guide - From Zero to Hero</p>
+      </header>
+
+      <nav>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#layers">Layers</a></li>
+          <li><a href="#flow">Data Flow</a></li>
+          <li><a href="#user-perspective">User Perspective</a></li>
+          <li><a href="#patterns">Design Patterns</a></li>
+        </ul>
+      </nav>
+
+      <section id="overview">
+        <h2>📖 The Story Begins</h2>
+        <p>
+          Zamislimo situaciju: Gradimo React library za komentare. Ali ne bilo
+          kakav - želimo da bude
+          <strong>fleksibilan, extensible i production-ready</strong>.
+        </p>
+
+        <p>
+          Umjesto da napravimo library koji radi samo sa jednim backend-om,
+          pravimo sistem gdje korisnik može koristiti
+          <strong>bilo koji backend</strong> - REST API, Firebase, GraphQL, pa
+          čak i localStorage!
+        </p>
+
+        <div class="highlight-box">
+          <h4>🎯 Glavni Cilj</h4>
+          <p>Napraviti library koji je:</p>
+          <ul>
+            <li>
+              <strong>Backend-agnostic</strong> - radi sa bilo kojim data
+              source-om
+            </li>
+            <li>
+              <strong>Extensible</strong> - svaka komponenta može se
+              customizovati
+            </li>
+            <li><strong>Type-safe</strong> - TypeScript podrška</li>
+            <li>
+              <strong>Production-ready</strong> - testiran, dokumentovan,
+              optimizovan
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2>🏗️ Layered Architecture</h2>
+        <p>
+          Library je organizovan u <strong>4 glavna layer-a</strong>, svaki sa
+          svojom odgovornošću:
+        </p>
+
+        <div class="architecture-diagram">
+          <div class="layer">
+            PRESENTATION LAYER<br /><small
+              >React Components - UI Rendering</small
+            >
+          </div>
+          <div class="arrow-down">↓</div>
+          <div class="layer">
+            BUSINESS LOGIC LAYER<br /><small
+              >Custom Hooks - State Management</small
+            >
+          </div>
+          <div class="arrow-down">↓</div>
+          <div class="layer">
+            COMPOSITION LAYER<br /><small
+              >Context & Providers - Glue Logic</small
+            >
+          </div>
+          <div class="arrow-down">↓</div>
+          <div class="layer">
+            DATA ACCESS LAYER<br /><small
+              >Adapters - Backend Communication</small
+            >
+          </div>
+        </div>
+
+        <div class="success-box">
+          <h4>✅ Zašto Layered Architecture?</h4>
+          <ul>
+            <li>
+              <strong>Separation of Concerns</strong> - Svaki layer radi jednu
+              stvar
+            </li>
+            <li>
+              <strong>Testability</strong> - Možeš testirati svaki layer
+              nezavisno
+            </li>
+            <li>
+              <strong>Maintainability</strong> - Lakše pronađeš i popraviš
+              bug-ove
+            </li>
+            <li>
+              <strong>Scalability</strong> - Dodavanje novih feature-a je
+              jednostavno
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="layers">
+        <h2>🎭 Detaljno Po Layer-ima</h2>
+
+        <div class="layer-box">
+          <h4>Layer 1: Data Access Layer (Adapters)</h4>
+          <p>
+            <strong>Odgovornost:</strong> Komunikacija sa backend-om / data
+            source-om
+          </p>
+          <p><strong>Lokacija:</strong> <code>src/lib/adapters/</code></p>
+          <p><strong>Šta radi:</strong></p>
+          <ul>
+            <li>Implementira <code>CommentsAdapter</code> interface</li>
+            <li>Poziva API (fetch, axios, Firebase SDK, itd.)</li>
+            <li>NE upravlja state-om</li>
+            <li>NE zna ništa o React-u</li>
+          </ul>
+
+          <p><strong>Primer:</strong></p>
+          <pre><code>// Mock Adapter - simulira backend
+export function createMockAdapter() {
+  let comments = [...mockComments]
+  
+  return {
+    fetchComments: async () => {
+      await delay(500) // Simulira network
+      return [...comments]
+    },
+    
+    createComment: async (data) => {
+      const newComment = { id: generateId(), ...data }
+      comments.push(newComment)
+      return newComment
+    },
+    
+    updateComment: async (id, data) => {
+      const comment = comments.find(c => c.id === id)
+      Object.assign(comment, data)
+      return comment
+    },
+    
+    deleteComment: async (id) => {
+      comments = comments.filter(c => c.id !== id)
+    }
+  }
+}</code></pre>
+        </div>
+
+        <div class="layer-box">
+          <h4>Layer 2: Composition Layer (Context/Provider)</h4>
+          <p><strong>Odgovornost:</strong> "Lijepilo" između layer-a</p>
+          <p><strong>Lokacija:</strong> <code>src/lib/contexts/</code></p>
+          <p><strong>Šta radi:</strong></p>
+          <ul>
+            <li>Drži globalni state (adapter, config)</li>
+            <li>Omogućava pristup hook-ovima iz bilo koje komponente</li>
+            <li>Dependency injection pattern</li>
+          </ul>
+
+          <p><strong>Primer:</strong></p>
+          <pre><code>// CommentsProvider - prosleđuje adapter svima
+export function CommentsProvider({ adapter, children }) {
+  const value = { adapter }
+  
+  return (
+    &lt;CommentsContext.Provider value={value}&gt;
+      {children}
+    &lt;/CommentsContext.Provider&gt;
+  )
+}</code></pre>
+        </div>
+
+        <div class="layer-box">
+          <h4>Layer 3: Business Logic Layer (Hooks)</h4>
+          <p><strong>Odgovornost:</strong> State management i biznis logika</p>
+          <p><strong>Lokacija:</strong> <code>src/lib/hooks/</code></p>
+          <p><strong>Šta radi:</strong></p>
+          <ul>
+            <li>Upravlja state-om (comments, loading, error)</li>
+            <li>Poziva adapter za data operacije</li>
+            <li>Implementira optimistic updates</li>
+            <li>Validacija, sorting, filtering</li>
+          </ul>
+
+          <p><strong>Primer:</strong></p>
+          <pre><code>// useComments - glavna logika
+export function useComments(adapter) {
+  const [comments, setComments] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  
+  const fetchComments = async () => {
+    setLoading(true)
+    try {
+      const data = await adapter.fetchComments()
+      setComments(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const addComment = async (data) => {
+    const newComment = await adapter.createComment(data)
+    setComments(prev => [...prev, newComment])
+  }
+  
+  useEffect(() => {
+    fetchComments()
+  }, [])
+  
+  return { comments, loading, error, addComment }
+}</code></pre>
+        </div>
+
+        <div class="layer-box">
+          <h4>Layer 4: Presentation Layer (Components)</h4>
+          <p><strong>Odgovornost:</strong> UI rendering i user interakcija</p>
+          <p><strong>Lokacija:</strong> <code>src/lib/components/</code></p>
+          <p><strong>Šta radi:</strong></p>
+          <ul>
+            <li>Prikazuje podatke koje dobije od hook-a</li>
+            <li>Handluje user events (klikovi, forme)</li>
+            <li>NE poziva adapter direktno</li>
+            <li>NE upravlja state-om (osim local UI state-a)</li>
+          </ul>
+
+          <p><strong>Primer:</strong></p>
+          <pre><code>// Comments komponenta - samo UI
+export function Comments() {
+  const { comments, loading, addComment } = useComments()
+  
+  if (loading) return &lt;div&gt;Loading...&lt;/div&gt;
+  
+  return (
+    &lt;div&gt;
+      {comments.map(comment =&gt; (
+        &lt;CommentItem key={comment.id} comment={comment} /&gt;
+      ))}
+      &lt;CommentForm onSubmit={addComment} /&gt;
+    &lt;/div&gt;
+  )
+}</code></pre>
+        </div>
+      </section>
+
+      <section id="flow">
+        <h2>🔄 Complete Data Flow - "Add Comment" Story</h2>
+        <p>Hajde da pratimo šta se dešava kada korisnik doda novi komentar:</p>
+
+        <div class="flow-diagram">
+          <div class="flow-step">
+            <strong>Step 1: User Action</strong>
+            Korisnik klikne "Add Comment" dugme u
+            <code>&lt;CommentForm /&gt;</code> komponenti
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 2: Event Handler</strong>
+            Komponenta poziva <code>onSubmit</code> callback koji je dobila kao
+            prop
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 3: Hook Function</strong>
+            <code>useComments</code> hook prima poziv funkcije
+            <code>addComment(data)</code>
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 4: Set Loading State</strong>
+            Hook postavlja <code>setLoading(true)</code> - UI prikazuje loader
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 5: Call Adapter</strong>
+            Hook poziva <code>await adapter.createComment(data)</code>
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 6: Adapter Logic</strong>
+            Adapter šalje HTTP request na backend (ili u memoriju ako je mock)
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 7: Backend Response</strong>
+            Backend (ili mock) vraća novi komentar sa generisanim ID-jem
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 8: Adapter Returns Data</strong>
+            Adapter vraća novi komentar hook-u
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 9: Update State</strong>
+            Hook ažurira state:
+            <code>setComments(prev => [...prev, newComment])</code>
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 10: Re-render</strong>
+            React detektuje promjenu state-a i re-renderuje komponente
+          </div>
+
+          <div class="flow-step">
+            <strong>Step 11: UI Update</strong>
+            Novi komentar se pojavljuje u listi! 🎉
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <h4>⚡ Optimistic Updates (Advanced)</h4>
+          <p>
+            Za bolji UX, možeš dodati komentar u UI <strong>prije</strong> nego
+            što backend odgovori:
+          </p>
+          <pre><code>const addComment = async (data) => {
+  // 1. Dodaj odmah u UI (optimistic)
+  const tempComment = { id: 'temp-' + Date.now(), ...data }
+  setComments(prev => [...prev, tempComment])
+  
+  try {
+    // 2. Pošalji na backend
+    const realComment = await adapter.createComment(data)
+    
+    // 3. Zamijeni temp sa pravim
+    setComments(prev => 
+      prev.map(c => c.id === tempComment.id ? realComment : c)
+    )
+  } catch (error) {
+    // 4. Ako faila, ukloni temp
+    setComments(prev => prev.filter(c => c.id !== tempComment.id))
+  }
+}</code></pre>
+        </div>
+      </section>
+
+      <section id="user-perspective">
+        <h2>👤 User Perspective - Kako Korisnik Koristi Library</h2>
+
+        <h3>Scenario 1: REST API Backend</h3>
+        <p>Korisnik ima Node.js backend sa REST API-jem:</p>
+
+        <pre><code>// 1. Korisnik kreira svoj REST adapter
+const myRestAdapter = {
+  fetchComments: async () => {
+    const res = await fetch('https://myapi.com/comments')
+    return res.json()
+  },
+  
+  createComment: async (data) => {
+    const res = await fetch('https://myapi.com/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    return res.json()
+  },
+  
+  updateComment: async (id, data) => {
+    const res = await fetch(`https://myapi.com/comments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    return res.json()
+  },
+  
+  deleteComment: async (id) => {
+    await fetch(`https://myapi.com/comments/${id}`, {
+      method: 'DELETE'
+    })
+  }
+}
+
+// 2. Koristi tvoj library sa SVOJIM adapterom
+function App() {
+  return (
+    &lt;CommentsProvider adapter={myRestAdapter}&gt;
+      &lt;Comments /&gt;
+    &lt;/CommentsProvider&gt;
+  )
+}</code></pre>
+
+        <h3>Scenario 2: Firebase Backend</h3>
+        <p>Drugi korisnik koristi Firebase Firestore:</p>
+
+        <pre><code>import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
+
+const myFirebaseAdapter = {
+  fetchComments: async () => {
+    const snapshot = await getDocs(collection(db, 'comments'))
+    return snapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data() 
+    }))
+  },
+  
+  createComment: async (data) => {
+    const docRef = await addDoc(collection(db, 'comments'), data)
+    return { id: docRef.id, ...data }
+  },
+  
+  updateComment: async (id, data) => {
+    const docRef = doc(db, 'comments', id)
+    await updateDoc(docRef, data)
+    return { id, ...data }
+  },
+  
+  deleteComment: async (id) => {
+    await deleteDoc(doc(db, 'comments', id))
+  }
+}
+
+function App() {
+  return (
+    &lt;CommentsProvider adapter={myFirebaseAdapter}&gt;
+      &lt;Comments /&gt;
+    &lt;/CommentsProvider&gt;
+  )
+}</code></pre>
+
+        <h3>Scenario 3: Client-Only (No Backend)</h3>
+        <p>Treći korisnik ne želi backend - samo in-memory komentari:</p>
+
+        <pre><code>import { createMockAdapter } from '@zmirnes/react-comments'
+
+function App() {
+  // Koristi tvoj built-in mock adapter
+  const adapter = createMockAdapter()
+  
+  return (
+    &lt;CommentsProvider adapter={adapter}&gt;
+      &lt;Comments /&gt;
+    &lt;/CommentsProvider&gt;
+  )
+  
+  // Komentari žive u memoriji - gube se na refresh
+}</code></pre>
+
+        <div class="success-box">
+          <h4>🎯 Ključna Poenta</h4>
+          <p><strong>Tvoj library NE ZNA odakle dolaze podaci!</strong></p>
+          <p>
+            On samo kaže: "Daj mi komentare", "Dodaj komentar", "Obriši
+            komentar"
+          </p>
+          <p>Korisnik odlučuje KAKO će to implementirati kroz adapter.</p>
+        </div>
+      </section>
+
+      <section id="patterns">
+        <h2>🎨 Design Patterns Koje Koristimo</h2>
+
+        <h3>1. Adapter Pattern</h3>
+        <p>
+          <strong>Problem:</strong> Library treba da radi sa različitim
+          backend-ima
+        </p>
+        <p>
+          <strong>Rješenje:</strong> Definišemo interface, korisnik implementira
+        </p>
+
+        <pre><code>// Interface (contract)
+interface CommentsAdapter {
+  fetchComments(): Promise&lt;Comment[]&gt;
+  createComment(data: CreateCommentDTO): Promise&lt;Comment&gt;
+  updateComment(id: string, data: UpdateCommentDTO): Promise&lt;Comment&gt;
+  deleteComment(id: string): Promise&lt;void&gt;
+}
+
+// Korisnik može napraviti bilo koju implementaciju
+// REST, GraphQL, Firebase, localStorage, itd.</code></pre>
+
+        <h3>2. Dependency Injection Pattern</h3>
+        <p>
+          <strong>Problem:</strong> Hookovi trebaju adapter, ali ne bi trebali
+          kreirati ga sami
+        </p>
+        <p><strong>Rješenje:</strong> Proslijeđujemo adapter kao parametar</p>
+
+        <pre><code>// BAD - hook kreira adapter (tight coupling)
+function useComments() {
+  const adapter = createRestAdapter() // ❌ Hardcoded!
+}
+
+// GOOD - adapter se prosleđuje (loose coupling)
+function useComments(adapter) {
+  // ✅ Prihvata bilo koji adapter
+}</code></pre>
+
+        <h3>3. Provider Pattern</h3>
+        <p>
+          <strong>Problem:</strong> Svaka komponenta treba pristup adapter-u
+        </p>
+        <p><strong>Rješenje:</strong> Koristimo React Context</p>
+
+        <pre><code>// Provider drži adapter i config
+&lt;CommentsProvider adapter={myAdapter} config={myConfig}&gt;
+  &lt;Comments /&gt;
+  &lt;CommentsSidebar /&gt;
+  &lt;CommentsStats /&gt;
+&lt;/CommentsProvider&gt;
+
+// Sve komponente mogu pristupiti adaptera
+function Comments() {
+  const { adapter } = useCommentsContext()
+  const { comments } = useComments(adapter)
+}</code></pre>
+
+        <h3>4. Compound Components Pattern</h3>
+        <p>
+          <strong>Problem:</strong> Korisnik želi customizovati strukturu
+          komponenti
+        </p>
+        <p><strong>Rješenje:</strong> Pravi se kao "building blocks"</p>
+
+        <pre><code>// Umjesto rigidnog:
+&lt;Comments data={data} /&gt;
+
+// Korisnik može:
+&lt;Comments&gt;
+  &lt;Comments.Header&gt;
+    &lt;h2&gt;Discussion&lt;/h2&gt;
+  &lt;/Comments.Header&gt;
+  
+  &lt;Comments.List&gt;
+    &lt;Comments.Item&gt;
+      &lt;Comments.Avatar /&gt;
+      &lt;Comments.Content&gt;
+        &lt;Comments.Author /&gt;
+        &lt;Comments.Body /&gt;
+      &lt;/Comments.Content&gt;
+    &lt;/Comments.Item&gt;
+  &lt;/Comments.List&gt;
+  
+  &lt;Comments.Form /&gt;
+&lt;/Comments&gt;</code></pre>
+
+        <h3>5. Custom Hooks Pattern</h3>
+        <p><strong>Problem:</strong> Logika je kompleksna i ponavlja se</p>
+        <p><strong>Rješenje:</strong> Izvučemo je u reusable hook</p>
+
+        <pre><code>// Umjesto ponavljanja logike u svim komponentama:
+function Comments() {
+  const [comments, setComments] = useState([])
+  const [loading, setLoading] = useState(false)
+  // ... 50 linija logike
+}
+
+// Hook enkapsulira svu logiku:
+function Comments() {
+  const { comments, loading, addComment } = useComments(adapter)
+  // Samo 1 linija!
+}</code></pre>
+      </section>
+
+      <section>
+        <h2>📊 Comparison Table - Ko Šta Radi?</h2>
+
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Odgovornost</th>
+              <th>Adapter</th>
+              <th>Hook</th>
+              <th>Component</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>API pozivi (fetch, axios)</td>
+              <td>✅ DA</td>
+              <td>❌ NE</td>
+              <td>❌ NE</td>
+            </tr>
+            <tr>
+              <td>State management (useState)</td>
+              <td>❌ NE</td>
+              <td>✅ DA</td>
+              <td>❌ NE</td>
+            </tr>
+            <tr>
+              <td>Loading/Error state</td>
+              <td>❌ NE</td>
+              <td>✅ DA</td>
+              <td>❌ NE</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </body>
+</html>
