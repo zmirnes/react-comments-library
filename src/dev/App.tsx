@@ -2,11 +2,20 @@
 import { useEffect, useState } from "react";
 import { Comment, createMockAdapter } from "../lib";
 
+const adapter = createMockAdapter();
+
 function App() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const adapter = createMockAdapter();
+  const handleAddComment = async () => {
+    const newComment = await adapter.createComment({
+      content: "Test comment",
+      authorId: "test-user",
+      authorName: "Test User",
+    });
+    setComments((prev) => [newComment, ...prev]);
+  };
 
   useEffect(() => {
     const loadComments = async () => {
@@ -30,6 +39,8 @@ function App() {
   return (
     <div style={{ padding: "2rem" }}>
       <h1>Comments ({comments.length})</h1>
+
+      <button onClick={handleAddComment}>Add Comment</button>
 
       {comments.map((comment) => (
         <div
